@@ -1,5 +1,6 @@
 import React from 'react'
 import {useState} from 'react'
+
 import { useAuth } from '../utils/AuthContext'
 import { Link } from 'react-router-dom'
 
@@ -16,8 +17,10 @@ const RegisterPage = () => {
         let value = e.target.value 
     
         setCredentials({...credentials, [name]:value})
+
+        
         // console.log('CREDS:', credentials)
-      }
+        }
 
   return (
     <div className="auth--container">
