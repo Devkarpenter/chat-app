@@ -54,9 +54,12 @@ body {
 
 .form--wrapper {
   width: 100%;
+  max-width: 400px;
   max-width: 360px;
   padding: 2em;
   background-color: var(--secondaryBgColor);
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   border-radius: 15px;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
@@ -66,6 +69,8 @@ body {
 .field--wrapper {
   display: flex;
   flex-direction: column;
+  gap: 1em;
+  padding: 0.5em 0;
   gap: 1.25em;
 }
 
@@ -91,6 +96,7 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focu
 .btn {
   padding: 0.75em 1.5em;
   border: none;
+  
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
