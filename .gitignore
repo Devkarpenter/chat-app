@@ -25,4 +25,4 @@ dist-ssr
 
 # secret files
 .evn
-git commit -m"env fix"
+
