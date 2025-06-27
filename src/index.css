@@ -33,7 +33,7 @@ a:hover {
 }
 
 body {
-  background: linear-gradient(135deg,rgb(15, 139, 139),rgb(26, 111, 130));
+  background: #1c2332;
   color: var(--textColorMain);
   font-size: 16px;
   line-height: 1.6;
@@ -46,7 +46,7 @@ body {
 
 /* Login & Register Pages */
 .auth--container {
-  height: 100vh;
+  /* height: 100vh; */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -67,7 +67,7 @@ body {
 .field--wrapper {
   display: flex;
   flex-direction: column;
-  gap: 1.25em;
+  gap: 0.25em;
   padding: 0.5em 0;
 }
 
