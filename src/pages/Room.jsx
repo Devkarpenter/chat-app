@@ -125,7 +125,11 @@ const Room = () => {
               <div className="message--header">
                 <p>
                   {message?.username ? (
-                    <span> {message?.username}</span>
+                    <span>
+                      {message?.username?.trim()
+                        ? message.username
+                        : `User-${message?.user_id?.slice(0, 4)}`}
+                    </span>
                   ) : (
                     "Anonymous user"
                   )}

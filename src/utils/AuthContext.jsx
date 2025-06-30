@@ -18,7 +18,9 @@ export const AuthProvider = ({ children }) => {
         try {
             let accountDetails = await account.get();
             setUser(accountDetails);
-        } catch (error) {}
+        } catch (error) {
+            // User not logged in
+        }
         setLoading(false);
     };
 
@@ -27,7 +29,7 @@ export const AuthProvider = ({ children }) => {
         console.log("CREDS:", credentials);
 
         try {
-            let response = await account.createEmailPasswordSession(
+            await account.createEmailPasswordSession(
                 credentials.email,
                 credentials.password
             );
@@ -40,8 +42,12 @@ export const AuthProvider = ({ children }) => {
     };
 
     const handleLogout = async () => {
-        const response = await account.deleteSession("current");
-        setUser(null);
+        try {
+            await account.deleteSession("current");
+            setUser(null);
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     const handleRegister = async (e, credentials) => {
@@ -50,7 +56,7 @@ export const AuthProvider = ({ children }) => {
 
         if (credentials.password1 !== credentials.password2) {
             alert("Passwords did not match!");
-            return;
+            return false;
         }
 
         try {
@@ -61,18 +67,13 @@ export const AuthProvider = ({ children }) => {
                 credentials.name
             );
 
-            await account.createEmailSession(credentials.email, credentials.password1)
             console.log("User registered!", response);
 
-            await account.createEmailSession(
-                credentials.email,
-                credentials.password1
-            );
-            let accountDetails = await account.get();
-            setUser(accountDetails);
-            navigate("/");
+            // ✅ Do NOT auto-login or navigate
+            return true; // Registration successful
         } catch (error) {
-            console.error(error);
+            console.error("Registration error:", error);
+            return false; // Registration failed
         }
     };
 
