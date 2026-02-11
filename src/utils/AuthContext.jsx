@@ -6,93 +6,98 @@ import { ID } from "appwrite";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState(null);
-    const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        getUserOnLoad();
-    }, []);
+  useEffect(() => {
+    getUserOnLoad();
+  }, []);
 
-    const getUserOnLoad = async () => {
-        try {
-            let accountDetails = await account.get();
-            setUser(accountDetails);
-        } catch (error) {
-            // User not logged in
-        }
-        setLoading(false);
-    };
+  const getUserOnLoad = async () => {
+    try {
+      const accountDetails = await account.get();
+      setUser(accountDetails);
+    } catch (error) {
+      console.log("No active session — user not logged in.");
+      setUser(null); // IMPORTANT FIX
+    }
+    setLoading(false);
+  };
 
-    const handleUserLogin = async (e, credentials) => {
-        e.preventDefault();
-        console.log("CREDS:", credentials);
+  const handleUserLogin = async (e, credentials) => {
+    e.preventDefault();
+    console.log("CREDS:", credentials);
 
-        try {
-            await account.createEmailPasswordSession(
-                credentials.email,
-                credentials.password
-            );
-            let accountDetails = await account.get();
-            setUser(accountDetails);
-            navigate("/");
-        } catch (error) {
-            console.error(error);
-        }
-    };
+    try {
+      await account.createEmailPasswordSession(
+        credentials.email,
+        credentials.password
+      );
 
-    const handleLogout = async () => {
-        try {
-            await account.deleteSession("current");
-            setUser(null);
-        } catch (error) {
-            console.error(error);
-        }
-    };
+      const accountDetails = await account.get();
+      setUser(accountDetails);
+      navigate("/");
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Login failed: " + error.message);
+    }
+  };
 
-    const handleRegister = async (e, credentials) => {
-        e.preventDefault();
-        console.log("Handle Register triggered!", credentials);
+  const handleLogout = async () => {
+    try {
+      await account.deleteSession("current");
+      setUser(null);
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
-        if (credentials.password1 !== credentials.password2) {
-            alert("Passwords did not match!");
-            return false;
-        }
+  const handleRegister = async (e, credentials) => {
+    e.preventDefault();
+    console.log("Handle Register triggered!", credentials);
 
-        try {
-            let response = await account.create(
-                ID.unique(),
-                credentials.email,
-                credentials.password1,
-                credentials.name
-            );
+    if (credentials.password1 !== credentials.password2) {
+      alert("Passwords did not match!");
+      return false;
+    }
 
-            console.log("User registered!", response);
+    try {
+      const response = await account.create(
+        ID.unique(),
+        credentials.email,
+        credentials.password1,
+        credentials.name
+      );
 
-            // ✅ Do NOT auto-login or navigate
-            return true; // Registration successful
-        } catch (error) {
-            console.error("Registration error:", error);
-            return false; // Registration failed
-        }
-    };
+      alert("Registration successful! Please log in.");
+      console.log("User registered!", response);
 
-    const contextData = {
-        user,
-        handleUserLogin,
-        handleLogout,
-        handleRegister,
-    };
+      return true; // registration success
+    } catch (error) {
+      alert("Registration failed: " + error.message);
+      console.error("Registration error:", error);
+      return false;
+    }
+  };
 
-    return (
-        <AuthContext.Provider value={contextData}>
-            {loading ? <p>Loading...</p> : children}
-        </AuthContext.Provider>
-    );
+  const contextData = {
+    user,
+    handleUserLogin,
+    handleLogout,
+    handleRegister,
+  };
+
+  return (
+    <AuthContext.Provider value={contextData}>
+      {loading ? <p>Loading...</p> : children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {
-    return useContext(AuthContext);
+  return useContext(AuthContext);
 };
 
 export default AuthContext;

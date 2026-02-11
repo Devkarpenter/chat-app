@@ -23,6 +23,7 @@ const RegisterPage = () => {
     const success = await handleRegister(e, credentials);
     if (success) {
       setSuccessMessage("Registration successful! You can now log in.");
+      alart("Registration successful! Please log in.");
       setCredentials({ name: '', email: '', password1: '', password2: '' });
     }
   };
