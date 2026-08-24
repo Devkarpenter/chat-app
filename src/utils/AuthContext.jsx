@@ -1,103 +1,73 @@
-import { createContext, useState, useEffect, useContext } from "react";
-import { account } from "../appwriteConfig";
-import { useNavigate } from "react-router";
-import { ID } from "appwrite";
+import { createContext, useContext, useEffect, useState } from 'react'
+import { ID } from 'appwrite'
+import { useNavigate } from 'react-router-dom'
+import { account, PROJECT_ID } from '../appwriteConfig'
 
-const AuthContext = createContext();
+const AuthContext = createContext(null)
+const messageFromError = (error, fallback) => error?.message || fallback
 
 export const AuthProvider = ({ children }) => {
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    getUserOnLoad();
-  }, []);
-
-  const getUserOnLoad = async () => {
-    try {
-      const accountDetails = await account.get();
-      setUser(accountDetails);
-    } catch (error) {
-      console.log("No active session — user not logged in.");
-      setUser(null); // IMPORTANT FIX
+    const loadUser = async () => {
+      if (!PROJECT_ID) {
+        setLoading(false)
+        return
+      }
+      try {
+        setUser(await account.get())
+      } catch {
+        setUser(null)
+      } finally {
+        setLoading(false)
+      }
     }
-    setLoading(false);
-  };
+    loadUser()
+  }, [])
 
-  const handleUserLogin = async (e, credentials) => {
-    e.preventDefault();
-    console.log("CREDS:", credentials);
-
+  const handleUserLogin = async (credentials) => {
+    if (!PROJECT_ID) return { success: false, error: 'Appwrite is not configured. Add your project ID to the .env file.' }
     try {
-      await account.createEmailPasswordSession(
-        credentials.email,
-        credentials.password
-      );
-
-      const accountDetails = await account.get();
-      setUser(accountDetails);
-      navigate("/");
+      await account.createEmailPasswordSession(credentials.email.trim(), credentials.password)
+      setUser(await account.get())
+      navigate('/', { replace: true })
+      return { success: true }
     } catch (error) {
-      console.error("Login error:", error);
-      alert("Login failed: " + error.message);
+      return { success: false, error: messageFromError(error, 'We could not sign you in. Please check your details.') }
     }
-  };
+  }
 
   const handleLogout = async () => {
     try {
-      await account.deleteSession("current");
-      setUser(null);
-      navigate("/login");
+      await account.deleteSession('current')
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error('Unable to close the remote session:', error)
+    } finally {
+      setUser(null)
+      navigate('/login', { replace: true })
     }
-  };
+  }
 
-  const handleRegister = async (e, credentials) => {
-    e.preventDefault();
-    console.log("Handle Register triggered!", credentials);
-
-    if (credentials.password1 !== credentials.password2) {
-      alert("Passwords did not match!");
-      return false;
-    }
-
+  const handleRegister = async (credentials) => {
+    if (!PROJECT_ID) return { success: false, error: 'Appwrite is not configured. Add your project ID to the .env file.' }
+    if (credentials.password1 !== credentials.password2) return { success: false, error: 'Your passwords do not match.' }
     try {
-      const response = await account.create(
-        ID.unique(),
-        credentials.email,
-        credentials.password1,
-        credentials.name
-      );
-
-      alert("Registration successful! Please log in.");
-      console.log("User registered!", response);
-
-      return true; // registration success
+      await account.create(ID.unique(), credentials.email.trim(), credentials.password1, credentials.name.trim())
+      return { success: true }
     } catch (error) {
-      alert("Registration failed: " + error.message);
-      console.error("Registration error:", error);
-      return false;
+      return { success: false, error: messageFromError(error, 'We could not create your account. Please try again.') }
     }
-  };
+  }
 
-  const contextData = {
-    user,
-    handleUserLogin,
-    handleLogout,
-    handleRegister,
-  };
+  if (loading) return <div className="loading-screen"><span className="loader" /><p>Opening Nexus…</p></div>
 
-  return (
-    <AuthContext.Provider value={contextData}>
-      {loading ? <p>Loading...</p> : children}
-    </AuthContext.Provider>
-  );
-};
+  return <AuthContext.Provider value={{ user, handleUserLogin, handleLogout, handleRegister }}>{children}</AuthContext.Provider>
+}
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+// eslint-disable-next-line react-refresh/only-export-components
+export const useAuth = () => useContext(AuthContext)
 
-export default AuthContext;
+export default AuthContext
